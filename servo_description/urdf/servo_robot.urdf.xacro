@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro"
+	name="servo" >
+
+	<!-- common stuff -->
+	<xacro:include filename="$(find servo_description)/urdf/common.gazebo.xacro" />
+
+	<!-- servo -->
+	<xacro:include filename="$(find servo_description)/urdf/servo.urdf.xacro" />
+	<!--xacro:include filename="$(find servo_description)/urdf/wall_world.urdf.xacro" /-->
+
+	<!-- arm -->
+	<xacro:servo_robot prefix="" joint_limited="false"/>
+
+	<link name="world" />
+
+	<joint name="world_joint" type="fixed">
+		<parent link="world" />
+		<child link = "base_link" />
+		<!-- <origin xyz="0.2 0. 0.065" rpy="0.0 0.0 0.0" /> -->
+		<origin xyz="0.0 0.0 -0.116" rpy="0.0 0.0 -0.262" />
+	</joint>
+<!--
+	<joint name="wall_joint" type="fixed">
+		<parent link="world" />
+		<child link = "wall_link" />
+		<axis      xyz="0 0 0" />
+		<dynamics damping="0.0" friction="0.0"/>
+		<origin      xyz="0.0 0 0.065"      rpy="00 00 3.14" />
+	</joint>
+-->
+</robot>

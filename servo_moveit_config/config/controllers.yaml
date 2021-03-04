@@ -1,0 +1,11 @@
+controller_list:
+  - name: ""
+    action_ns: follow_joint_trajectory
+    type: FollowJointTrajectory
+    joints:
+      - a1_joint
+      - a2_joint
+      - a3_joint
+      - a4_joint
+      - a5_joint
+      - a6_joint

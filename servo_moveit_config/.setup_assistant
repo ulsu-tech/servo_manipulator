@@ -1,0 +1,11 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: servo_description
+    relative_path: urdf/servo_robot.urdf.xacro
+    xacro_args: ""
+  SRDF:
+    relative_path: config/servo.srdf
+  CONFIG:
+    author_name: Chavkin E.
+    author_email: a110589@yandex.ru
+    generated_timestamp: 1575440393

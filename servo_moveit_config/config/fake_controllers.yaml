@@ -1,0 +1,14 @@
+controller_list:
+  - name: fake_panda_arm_controller
+    joints:
+      - a1_joint
+      - a2_joint
+      - a3_joint
+      - a4_joint
+      - a5_joint
+      - a6_joint
+      - v1_joint
+      - v2_joint
+  - name: fake_hand_controller
+    joints:
+      - r1_joint

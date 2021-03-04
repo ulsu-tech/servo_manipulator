@@ -1,0 +1,21 @@
+arm_controller:
+  type: position_controllers/JointTrajectoryController
+  joints:
+     - a1_joint
+     - a2_joint
+     - a3_joint
+     - a4_joint
+     - a5_joint
+     - a6_joint
+  constraints:
+      goal_time: 0.6
+      stopped_velocity_tolerance: 0.05
+      a1_joint: {trajectory: 0.1, goal: 0.1}
+      a2_joint: {trajectory: 0.1, goal: 0.1}
+      a3_joint: {trajectory: 0.1, goal: 0.1}
+      a4_joint: {trajectory: 0.1, goal: 0.1}
+      a5_joint: {trajectory: 0.1, goal: 0.1}
+      a6_joint: {trajectory: 0.1, goal: 0.1}
+  stop_trajectory_duration: 0.5
+  state_publish_rate:  25
+  action_monitor_rate: 10

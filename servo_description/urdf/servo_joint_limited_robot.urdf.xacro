@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro"
+       name="servo" >
+
+  <!-- common stuff -->
+  <xacro:include filename="$(find servo_description)/urdf/common.gazebo.xacro" />
+
+  <!-- servo -->
+  <xacro:include filename="$(find servo_description)/urdf/servo.urdf.xacro" />
+
+  <!-- arm -->
+  <xacro:servo_robot prefix="" joint_limited="true"
+    a1_lower_limit="${-pi}" a1_upper_limit="${pi}"
+    a2_lower_limit="${-pi}" a2_upper_limit="${pi}"
+    a3_lower_limit="${-pi}" a3_upper_limit="${pi}"
+    a4_lower_limit="${-pi}" a4_upper_limit="${pi}"
+    a5_lower_limit="${-pi}" a5_upper_limit="${pi}"
+    a6_lower_limit="${-pi}" a6_upper_limit="${pi}"
+  />
+
+  <link name="world" />
+
+  <joint name="world_joint" type="fixed">
+    <parent link="world" />
+    <child link = "base_link" />
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+  </joint>
+
+
+</robot>

@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="gui" default="true"/>
+
+  <include file="$(find servo_gazebo)/launch/servo.launch">
+    <arg name="limited" value="true"/>
+    <arg name="gui" value="$(arg gui)"/>
+  </include>
+
+</launch>

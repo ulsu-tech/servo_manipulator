@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+
+	<link name="wall_link" >
+		<visual>
+			<geometry>
+				<mesh filename="package://servo_description/meshes/wall.stl" />
+			</geometry>
+			<material name="LightGrey">
+				<color rgba="0.8 0.6 0.7 1.0"/>
+			</material>
+		</visual>
+		<collision>
+			<geometry>
+				<mesh filename="package://servo_description/meshes/wall.stl" />
+			</geometry>
+		</collision>
+		<inertial>
+			<mass value="${base_mass}" />
+			<origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+			<inertia
+				ixx="0"        ixy="0"        ixz="0"
+				iyy="0"        iyz="0"
+				izz="0"
+			/>
+		</inertial>
+	</link>
+
+</robot>

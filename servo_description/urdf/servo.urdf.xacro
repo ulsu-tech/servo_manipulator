@@ -1,0 +1,704 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+    <xacro:include filename="$(find servo_description)/urdf/servo.transmission.xacro" />
+    <xacro:include filename="$(find servo_description)/urdf/servo.gazebo.xacro" />
+
+    <!-- Inertia parameters -->
+    <xacro:property name="base_mass" value="4.0" />  <!-- This mass might be incorrect -->
+    <xacro:property name="a1_mass" value="3.7000" />
+    <xacro:property name="a2_mass" value="8.3930" />
+    <xacro:property name="a3_mass" value="2.2750" />
+    <xacro:property name="a4_mass" value="1.2190" />
+    <xacro:property name="a5_mass" value="1.2190" />
+    <xacro:property name="a6_mass" value="0.1879" />
+
+
+
+    <xacro:property name="servo_d1" value="0.089159" />
+    <xacro:property name="servo_a2" value="-0.42500" />
+    <xacro:property name="servo_a3" value="-0.39225" />
+    <xacro:property name="servo_d4" value="0.10915" />
+    <xacro:property name="servo_d5" value="0.09465" />
+    <xacro:property name="servo_d6" value="0.0823" />
+
+    <!-- Arbitrary offsets for shoulder/elbow joints -->
+    <xacro:property name="shoulder_offset" value="0.13585" />  <!-- measured from model -->
+    <xacro:property name="elbow_offset" value="-0.1197" /> <!-- measured from model -->
+
+    <!-- link lengths used in model -->
+    <xacro:property name="a1_height" value="${servo_d1}" />
+    <xacro:property name="a2_length" value="${-servo_a2}" />
+    <xacro:property name="a3_length" value="${-servo_a3}" />
+    <xacro:property name="a4_length" value="${servo_d4}" />
+    <xacro:property name="a5_length" value="${servo_d5}" />
+    <xacro:property name="a6_length" value="${servo_d6}" />
+
+
+    <xacro:property name="shoulder_radius" value="0.060" />   <!-- manually measured -->
+    <xacro:property name="upper_arm_radius" value="0.054" />  <!-- manually measured -->
+    <xacro:property name="elbow_radius" value="0.060" />      <!-- manually measured -->
+    <xacro:property name="forearm_radius" value="0.040" />    <!-- manually measured -->
+    <xacro:property name="wrist_radius" value="0.045" />      <!-- manually measured -->
+
+    <xacro:macro name="cylinder_inertial" params="radius length mass *origin">
+        <inertial>
+            <mass value="${mass}" />
+            <xacro:insert_block name="origin" />
+            <inertia
+                ixx="${0.0833333 * mass * (3 * radius * radius + length * length)}" ixy="0.0" ixz="0.0"
+                iyy="${0.0833333 * mass * (3 * radius * radius + length * length)}" iyz="0.0"
+                izz="${0.5 * mass * radius * radius}"
+            />
+        </inertial>
+    </xacro:macro>
+
+    <xacro:macro name="null_inertial" params="radius length mass *origin">
+        <inertial>
+            <mass value="${mass}" />
+            <xacro:insert_block name="origin" />
+            <inertia
+                ixx="0" ixy="0" ixz="0"
+                iyy="0" iyz="0"
+                izz="0"
+            />
+        </inertial>
+    </xacro:macro>
+
+    <xacro:macro name="servo_robot" params="prefix joint_limited
+        a1_lower_limit:=${-pi}    a1_upper_limit:=${pi}
+        a2_lower_limit:=${-pi}    a2_upper_limit:=${pi}
+        a3_lower_limit:=${-pi}    a3_upper_limit:=${pi}
+        a4_lower_limit:=${-pi}    a4_upper_limit:=${pi}
+        a5_lower_limit:=${-pi}    a5_upper_limit:=${pi}
+        a6_lower_limit:=${-pi}    a6_upper_limit:=${pi}">
+
+        <link name="${prefix}base_link" >
+            <visual>
+                <geometry>
+                    <mesh filename="package://servo_description/meshes/base_link.stl" />
+                </geometry>
+                <material name="Black">
+                    <color rgba="0.7 0.7 0.7 1.0"/>
+                </material>
+            </visual>
+            <collision>
+                <geometry>
+                    <mesh filename="package://servo_description/meshes/base_link.stl" />
+                </geometry>
+            </collision>
+            <xacro:null_inertial radius="0.06" length="0.05" mass="${base_mass}">
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+            </xacro:null_inertial>
+        </link>
+
+        <joint name="${prefix}a1_joint" type="revolute">
+            <parent link="${prefix}base_link" />
+            <child link = "${prefix}a1_link" />
+            <origin xyz="0 0 0" rpy="-0.18123 -1.5708 0.18123" />
+            <axis xyz="1 0 0" />
+            <!-- <limit lower="${-2.0 * pi}" upper="${2.0 * pi}" effort="150.0" velocity="3.15"/> -->
+            <limit lower="-1.84" upper="0.78" effort="150.0" velocity="3.15"/>
+<!--             <xacro:unless value="${joint_limited}">
+                <limit lower="${-2.0 * pi}" upper="${2.0 * pi}" effort="150.0" velocity="3.15"/>
+            </xacro:unless>
+            <xacro:if value="${joint_limited}">
+                <limit lower="${a1_lower_limit}" upper="${a1_upper_limit}" effort="150.0" velocity="3.15"/>
+            </xacro:if>
+ -->            <dynamics damping="0.0" friction="0.0"/>
+        </joint>
+
+        <link name="${prefix}a1_link">
+            <visual>
+                <geometry>
+                    <mesh filename="package://servo_description/meshes/a1.stl" />
+                </geometry>
+                <material name="LightGrey">
+                    <color rgba="0.1 0.1 0.1 1.0"/>
+                </material>
+            </visual>
+            <collision>
+                <geometry>
+                    <mesh filename="package://servo_description/meshes/a1.stl" />
+                </geometry>
+            </collision>
+            <xacro:null_inertial radius="0.06" length="0.15" mass="${a1_mass}">
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+            </xacro:null_inertial>
+        </link>
+
+
+
+
+
+        <joint name="${prefix}test_joint" type="fixed">
+            <parent link="${prefix}world" />
+            <child link = "${prefix}test_link" />
+            <origin xyz="0 0 0" rpy="0.0 0.0 3.140" />
+            <axis xyz="1 0 0" />
+        </joint>
+
+        <link name="${prefix}test_link">
+            <visual>
+                <material name="LightGrey">
+                    <color rgba="0.31 0.31 0.31 1.0"/>
+                </material>
+                <geometry>
+                    <mesh filename="package://servo_description/meshes/test.stl" scale="0.001 0.001 0.001"/>
+                </geometry>
+            </visual>
+        </link>
+
+
+        <joint name="${prefix}test_end_joint" type="fixed">
+            <parent link="${prefix}world" />
+            <child link = "${prefix}test_end_link" />
+            <!-- <origin xyz="0.15 -0.62 0.3" rpy="0.0 0.0 0.0" /> -->
+            <origin xyz="0.5 0.0 0.5" rpy="0.0 0.0 0.0" />
+            <axis xyz="1 0 0" />
+        </joint>
+        <link name="${prefix}test_end_link">
+            <visual>
+                <geometry>
+                    <box size="0.01 0.01 0.01"/>
+                </geometry>
+                <origin rpy="0 0 0" xyz="-0.0 0 0"/>
+            </visual>
+        </link>
+<!-- 
+
+        <joint name="${prefix}test_wall_joint" type="fixed">
+            <parent link="${prefix}world" />
+            <child link = "${prefix}test_wall_link" />
+            <origin xyz="-0.15 -0.555 0.2" rpy="0.0 0.0 0.0" />
+            <axis xyz="1 0 0" />
+        </joint>
+        <link name="${prefix}test_wall_link">
+            <visual>
+                <geometry>
+                    <box size=".01 1.01 1.01"/>
+                </geometry>
+                <material name="Black">
+                    <color rgba="0.2 0.2 0.2 1.0"/>
+                </material>
+
+                <origin rpy="0 0 0" xyz="-0.0 0 0"/>
+            </visual>
+            <collision>
+                <geometry>
+                    <box size=".01 1.01 1.01"/>
+                </geometry>
+                <origin rpy="0 0 0" xyz="-0.0 0 0"/>
+            </collision>
+        </link> -->
+
+
+
+        <joint name="${prefix}a2_joint" type="revolute">
+            <parent link="${prefix}a1_link" />
+            <child link = "${prefix}a2_link" />
+            <origin xyz="0.23 0.023553 -0.087899" rpy="0 1.5708 0" />
+            <axis xyz="0.96593 0.25882 0" />
+            <limit lower="${a2_lower_limit}" upper="${a2_upper_limit}" effort="220.0" velocity="3.15"/>
+<!--             <xacro:unless value="${joint_limited}">
+                <limit lower="${-2.0 * pi}" upper="${2.0 * pi}" effort="150.0" velocity="3.15"/>
+            </xacro:unless>
+            <xacro:if value="${joint_limited}">
+                
+                <limit lower="${a2_lower_limit}" upper="${a2_upper_limit}" effort="150.0" velocity="3.15"/>
+            </xacro:if>
+            <dynamics damping="0.0" friction="0.0"/> -->
+        </joint>
+
+        <link name="${prefix}a2_link">
+            <visual>
+                <geometry>
+                    <mesh filename="package://servo_description/meshes/a2.stl" />
+                </geometry>
+                <material name="Black">
+                    <color rgba="0.2 0.2 0.2 1.0"/>
+                </material>
+            </visual>
+            <collision>
+                <geometry>
+                    <mesh filename="package://servo_description/meshes/a2.stl" />
+                </geometry>
+            </collision>
+            <xacro:null_inertial radius="0.06" length="0.56" mass="${a2_mass}">
+                <origin xyz="0.0 0.0 0.28" rpy="0 0 0" />
+            </xacro:null_inertial>
+        </link>
+
+        <joint name="${prefix}a3_joint" type="revolute">
+            <parent link="${prefix}a2_link" />
+            <child link = "${prefix}a3_link" />
+            <origin xyz="0.12 0.0303763 0.25899" rpy="0 0 3.14" />
+            <axis xyz="-0.96593 -0.25882 0" />
+            <limit lower="${-pi}" upper="${pi}" effort="250.0" velocity="3.15"/>
+<!--             <xacro:unless value="${joint_limited}">
+                <limit lower="${-pi}" upper="${pi}" effort="150.0" velocity="3.15"/>
+            </xacro:unless>
+            <xacro:if value="${joint_limited}">
+                <limit lower="${a3_lower_limit}" upper="${a3_upper_limit}" effort="150.0" velocity="3.15"/>
+            </xacro:if>
+            <dynamics damping="0.0" friction="0.0"/> -->
+        </joint>
+
+        <link name="${prefix}a3_link">
+            <visual>
+                <geometry>
+                    <mesh filename="package://servo_description/meshes/a3.stl" />
+                </geometry>
+                <material name="LightGrey">
+                    <color rgba="0.3 0.3 0.3 1.0"/>
+                </material>
+            </visual>
+            <collision>
+                <geometry>
+                    <mesh filename="package://servo_description/meshes/a3.stl" />
+                </geometry>
+            </collision>
+            <xacro:null_inertial radius="0.06" length="0.5" mass="${a3_mass}">
+                <origin xyz="0.0 0.0 0.25" rpy="0 0 0" />
+            </xacro:null_inertial>
+        </link>
+
+        <joint name="${prefix}a4_joint" type="revolute">
+            <parent link="${prefix}a3_link" />
+            <child link = "${prefix}a4_link" />
+            <origin xyz="-0.040569 -0.01087 0.058" rpy="0 0 3.1415" />
+            <axis xyz="0 0 1" />
+            <limit lower="${-.001 * pi}" upper="${.001 * pi}" effort="28.0" velocity="3.2"/>
+            <!-- <xacro:unless value="${joint_limited}">
+                <limit lower="${-2.0 * pi}" upper="${2.0 * pi}" effort="28.0" velocity="3.2"/>
+            </xacro:unless>
+            <xacro:if value="${joint_limited}">
+                <limit lower="${a4_lower_limit}" upper="${a4_upper_limit}" effort="28.0" velocity="3.2"/>
+            </xacro:if> -->
+            <dynamics damping="0.0" friction="0.0"/>
+        </joint>
+
+        <link name="${prefix}a4_link">
+            <visual>
+                <geometry>
+                    <mesh filename="package://servo_description/meshes/a4.stl" />
+                </geometry>
+                <material name="Green">
+                    <color rgba="0.4 0.4 0.4 1.0"/>
+                </material>
+            </visual>
+            <collision>
+                <geometry>
+                    <mesh filename="package://servo_description/meshes/a4.stl" />
+                </geometry>
+            </collision>
+            <xacro:null_inertial radius="0.6" length="0.12" mass="${a4_mass}">
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+            </xacro:null_inertial>
+        </link>
+
+        <joint name="${prefix}a5_joint" type="revolute">
+            <parent link="${prefix}a4_link" />
+            <child link = "${prefix}a5_link" />
+            <origin xyz="0.044433 0.011906 0.21" rpy="0 0 0" />
+            <axis xyz="0.96593 0.25882 0" />
+            <limit lower="-2" upper="2" effort="270.0" velocity="3.2"/>
+            <!-- <xacro:unless value="${joint_limited}">
+                <limit lower="${-2.0 * pi}" upper="${2.0 * pi}" effort="28.0" velocity="3.2"/>
+            </xacro:unless>
+            <xacro:if value="${joint_limited}">
+                <limit lower="${a5_lower_limit}" upper="${a5_upper_limit}" effort="28.0" velocity="3.2"/>
+            </xacro:if> -->
+            <dynamics damping="0.0" friction="0.0"/>
+        </joint>
+        <link name="${prefix}a5_link">
+            <visual>
+                <geometry>
+                    <mesh filename="package://servo_description/meshes/a5.stl" />
+                </geometry>
+                <material name="Black">
+                    <color rgba="0.5 0.5 0.5 1.0"/>
+                </material>
+            </visual>
+            <collision>
+                <geometry>
+                    <mesh filename="package://servo_description/meshes/a5.stl" />
+                </geometry>
+            </collision>
+            <xacro:null_inertial radius="0.6" length="0.12" mass="${a5_mass}">
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+            </xacro:null_inertial>
+        </link>
+
+        <joint name="${prefix}a6_joint" type="revolute">
+            <parent link="${prefix}a5_link" />
+            <child link = "${prefix}a6_link" />
+            <origin xyz="0.016179 0.0043352 0.0615" rpy="0 0 0" />
+            <axis xyz="0 0 1" />
+            <limit lower="-0.2" upper="1.6" effort="280.0" velocity="3.2"/>
+            <!-- <xacro:unless value="${joint_limited}">
+                <limit lower="${-2.0 * pi}" upper="${2.0 * pi}" effort="28.0" velocity="3.2"/>
+            </xacro:unless>
+            <xacro:if value="${joint_limited}">
+                <limit lower="${a6_lower_limit}" upper="${a6_upper_limit}" effort="28.0" velocity="3.2"/>
+            </xacro:if> -->
+            <dynamics damping="0.0" friction="0.0"/>
+        </joint>
+
+        <link name="${prefix}a6_link">
+            <!-- <visual>
+                <geometry>
+                    <mesh filename="package://servo_description/meshes/a6.stl" />
+                </geometry>
+                <material name="LightGrey">
+                    <color rgba="0.7 0.7 0.7 1.0"/>
+                </material>
+            </visual> -->
+<!--             <collision>
+                <geometry>
+                    <mesh filename="package://servo_description/meshes/a6.stl" />
+                </geometry>
+            </collision> -->
+            <xacro:null_inertial radius="0.6" length="0.12" mass="${a6_mass}">
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+            </xacro:null_inertial>
+        </link>
+
+
+
+
+        <link name="${prefix}grip_1_link">
+            <!-- <visual>
+                <geometry>
+                    <box size="0.03 0.005 0.07"/>
+                </geometry>
+                <origin rpy="0 0 0" xyz="-0.00 0 0"/>
+            </visual>
+            <collision>
+                <geometry>
+                    <box size="0.03 0.005 0.07"/>
+                </geometry>
+                <origin rpy="0 0 0" xyz="-0.00 0 0"/>
+            </collision> -->
+        </link>
+
+        <joint name="${prefix}panda_finger_joint1" type="prismatic">
+            <parent link="${prefix}a6_link" />
+            <child link = "${prefix}grip_1_link" />
+            <origin xyz="-0.005 0.02 0.07" rpy="0.0 0.0 0.230" />
+            <limit lower="0.0" upper="0.02" effort="28.0" velocity="3.2"/>            
+            <axis xyz="0 -1 0"/>
+        </joint>
+
+
+        <link name="${prefix}grip_2_link">
+            <!-- <visual>
+                <geometry>
+                    <box size="0.03 0.005 0.07"/>
+                </geometry>
+                <origin rpy="0 0 0" xyz="-0.00 0 0"/>
+            </visual>
+            <collision>
+                <geometry>
+                    <box size="0.03 0.005 0.07"/>
+                </geometry>
+                <origin rpy="0 0 0" xyz="-0.00 0 0"/>
+            </collision> -->
+        </link>       
+
+        <joint name="${prefix}grip_2_joint" type="prismatic">            
+            <parent link="${prefix}a6_link" />
+            <child link = "${prefix}grip_2_link" />
+            <origin xyz="0.005 -0.02 0.07" rpy="0.0 0.0 0.230" />
+            <limit lower="0.0" upper="0.02" effort="28.0" velocity="3.2"/>            
+            <axis xyz="0 1 0"/>
+            <mimic joint="${prefix}panda_finger_joint1" />
+        </joint>
+
+
+      
+
+
+
+        <link  name="v0_link"/>
+        <joint name="v0_joint" type="fixed">
+            <origin              xyz="0.0 0.0 0.13"              rpy="0.0 0.0 0.0" />
+            <parent link="a6_link" />
+            <child link="v0_link" />
+            <axis xyz="0 1 0" />
+        </joint>
+
+          <link  name="v1_link"/>
+          <joint  name="v1_joint" type="revolute">
+            <origin  xyz="0 0 0" rpy="0 0 0" />
+            <parent  link="v0_link" />
+            <child   link="v1_link" />
+            <axis    xyz="0 0 1" />
+            <limit
+              lower="-9"
+              upper="9"
+              effort="30"
+              velocity="1" />      
+            <dynamics damping="0.0" friction="0.0" />
+          </joint>
+
+          <link  name="v2_link"/>
+          <joint  name="v2_joint" type="revolute">
+            <origin  xyz="0 0 0" rpy="0 0 0" />
+            <parent  link="v1_link" />
+            <child   link="v2_link" />
+            <axis    xyz="0 1 0" />
+            <limit              lower="-9"              upper="9"              effort="30"              velocity="1" />      
+            <dynamics damping="0.0" friction="0.0" />
+          </joint> 
+
+
+
+        <joint name="${prefix}ee_fixed_joint" type="fixed">
+            <parent link="${prefix}v2_link" />
+            <child link = "${prefix}ee_link" />
+            <!-- <origin xyz="0.0 0.0 0.10" rpy="0.0 0.0 0.230" /> -->
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.230" />
+        </joint>
+
+        <link name="${prefix}ee_link">
+            <visual>
+                <origin rpy="0 0 0" xyz="0 0 0"/>
+                <geometry>
+                    <sphere radius="0.02"/>
+                </geometry>
+            </visual> 
+        </link>
+
+
+
+
+    <joint name="${prefix}base_link_gripper" type="fixed">
+        <parent link="${prefix}a6_link" />
+        <child link = "${prefix}base_link_gripper" />
+        <origin xyz="0.0 0.0 0.0" rpy="1.5707 0.0 0.262" />
+    </joint>
+
+  
+
+  <link    name="base_link_gripper">
+    <inertial>
+      <origin        xyz="-0.000166704941642219 0.035580780632098 6.73552072336936E-05"        rpy="0 0 0" />
+      <mass        value="0.102478231075252" />
+      <inertia        ixx="3.28515117275925E-05"        ixy="-1.07245316057925E-06"        ixz="-1.12387680030389E-07"        iyy="9.77872727231259E-06"        iyz="-4.70521238287081E-07"        izz="2.56042558392517E-05" />
+    </inertial>
+    <visual>
+      <origin        xyz="0 0 0"        rpy="0 0 0" />
+      <geometry>
+        <mesh          filename="package://servo_description/meshes/base_link_gripper.STL" />
+      </geometry>
+      <material        name="">
+        <color          rgba="0.56078431372549 0.56078431372549 0.56078431372549 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin        xyz="0 0 0"        rpy="0 0 0" />
+      <geometry>
+        <mesh          filename="package://servo_description/meshes/base_link_gripper.STL" />
+      </geometry>
+    </collision>
+  </link>
+
+
+  <link    name="r1_link">
+    <inertial>
+      <origin        xyz="0.00262657961614729 0.00962766754253007 0.00301231992734973"        rpy="0 0 0" />
+      <mass        value="0.00405064649023123" />
+      <inertia        ixx="0"        ixy="0"        ixz="0"        iyy="0"        iyz="0"        izz="0" />
+    </inertial>
+    <visual>
+      <origin        xyz="0 0 0"        rpy="0 0 0" />
+      <geometry>
+        <mesh          filename="package://servo_description/meshes/r1_link.STL" />
+      </geometry>
+      <material        name="">
+        <color          rgba="1.0 0.56078431372549 0.56078431372549 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin        xyz="0 0 0"        rpy="0 0 0" />
+      <geometry>
+        <mesh          filename="package://servo_description/meshes/r1_link.STL"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint    name="r1_joint"    type="revolute">
+    <origin      xyz="0.0125136628167969 0.0500000000000014 -0.0027"      rpy="0 0 0" />
+    <parent      link="base_link_gripper" />
+    <child      link="r1_link" />
+    <axis      xyz="-0.00467782381903998 0 0.999989058922305" />
+    <limit              lower="-0.7"              upper="0"              effort="30"              velocity="1" />      
+  </joint>
+
+
+  <link    name="s1_link">
+    <inertial>
+      <origin        xyz="-0.00870914608047762 0.0222753931706212 0.00301115730063501"        rpy="0 0 0" />
+      <mass        value="0.00848466452095324" />
+      <inertia        ixx="0"        ixy="0"        ixz="0"        iyy="0"        iyz="0"        izz="0" />
+    </inertial>
+    <visual>
+      <origin        xyz="0 0 0"        rpy="0 0 0" />
+      <geometry>
+        <mesh          filename="package://servo_description/meshes/s1_link.STL" />
+      </geometry>
+      <material        name="">
+        <color          rgba="0.56078431372549 0.56078431372549 0.56078431372549 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin        xyz="0 0 0"        rpy="0 0 0" />
+      <geometry>
+        <mesh          filename="package://servo_description/meshes/s1_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint    name="s1_joint"    type="revolute">
+    <origin
+      xyz="0.0077527860110237 0.0398609206341703 3.62665638615756E-05"      rpy="0 0 0" />
+    <parent      link="r1_link" />
+    <child      link="s1_link" />
+    <axis      xyz="-0.00467782381903997 0 0.999989058922305" />
+    <limit              lower="-9"              upper="9"              effort="30"              velocity="1" />      
+    <mimic joint="r1_joint" multiplier="-1" />
+  </joint>
+
+
+  <link    name="r2_link">
+    <inertial>
+      <origin        xyz="-0.00265988104749296 0.00958138871806024 0.00298758991491697"        rpy="0 0 0" />
+      <mass        value="0.00408073037544732" />
+      <inertia        ixx="0"        ixy="0"        ixz="0"        iyy="0"        iyz="0"        izz="0" />
+    </inertial>
+    <visual>
+      <origin        xyz="0 0 0"        rpy="0 0 0" />
+      <geometry>
+        <mesh          filename="package://servo_description/meshes/r2_link.STL" scale="0.9 0.9 0.5"/>
+      </geometry>
+      <material        name="">
+        <color          rgba="0.56078431372549 0.56078431372549 0.56078431372549 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin        xyz="0 0 0"        rpy="0 0 0" />
+      <geometry>
+        <mesh          filename="package://servo_description/meshes/r2_link.STL" scale="0.9 0.9 0.5"/>
+      </geometry>
+    </collision> 
+  </link>
+  <joint    name="r2_joint"    type="revolute">
+    <origin      xyz="-0.0124860636562627 0.05 -0.0"      rpy="0 0 0" />
+    <parent      link="base_link_gripper" />
+    <child      link="r2_link" />
+    <axis      xyz="-0.00467782381903998 0 0.999989058922305" />
+    <limit              lower="-9"              upper="9"              effort="30"              velocity="1" />      
+    <mimic joint="r1_joint" multiplier="-1" />
+  </joint>
+
+  <link    name="s2_link">
+    <inertial>
+      <origin        xyz="0.00866544267478155 0.0222814904432761 0.00298870390748049"        rpy="0 0 0" />
+      <mass        value="0.00848466452095324" />
+      <inertia        ixx="0"        ixy="0"        ixz="0"        iyy="0"        iyz="0"        izz="0" />
+    </inertial>
+    <visual>
+      <origin        xyz="0 0 0"        rpy="0 0 0" />
+      <geometry>
+        <mesh          filename="package://servo_description/meshes/s2_link.STL" />
+      </geometry>
+      <material        name="">
+        <color          rgba="0.56078431372549 0.56078431372549 0.56078431372549 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin        xyz="0 0 0"        rpy="0 0 0" />
+      <geometry>
+        <mesh          filename="package://servo_description/meshes/s2_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint    name="s2_joint"    type="revolute">
+    <origin      xyz="-0.00780822037978542 0.0398500986242302 -3.65258789093541E-05"      rpy="0 0 0" />
+    <parent      link="r2_link" />
+    <child      link="s2_link" />
+    <axis      xyz="-0.00467782381903997 0 0.999989058922305" />
+    <limit              lower="-9"              upper="9"              effort="30"              velocity="1" />      
+    <mimic joint="r1_joint" multiplier="1" />
+  </joint>
+
+
+  <link    name="p1_link">
+    <inertial>
+      <origin        xyz="0.00103559703418752 0.0161315105477872 0.00300487721706854"        rpy="0 0 0" />
+      <mass        value="0.00189243766259435" />
+      <inertia        ixx="0"        ixy="0"        ixz="0"        iyy="0"        iyz="0"        izz="0" />
+    </inertial>
+    <visual>
+      <origin        xyz="0 0 0"        rpy="0 0 0" />
+      <geometry>
+        <mesh          filename="package://servo_description/meshes/p1_link.STL"/>
+      </geometry>
+      <material        name="">
+        <color          rgba="0.56078431372549 0.56078431372549 0.56078431372549 1" />
+      </material>
+    </visual>
+<!--     <collision>
+      <origin        xyz="0 0 0"        rpy="0 0 0" />
+      <geometry>
+        <mesh          filename="package://servo_description/meshes/p1_link.STL" />
+      </geometry>
+    </collision>
+ -->  </link>  
+  <joint    name="p1_joint"    type="revolute">
+    <origin      xyz="0.00901370111056682 0.072 -0.0029078673094494"      rpy="0 0 0" />
+    <parent      link="base_link_gripper" />
+    <child      link="p1_link" />
+    <axis      xyz="-0.00467782381903997 0 0.999989058922305" />
+    <limit              lower="-9"              upper="9"              effort="30"              velocity="1" />      
+    <mimic joint="r1_joint" multiplier="1" />    
+  </joint>
+
+
+  <link    name="p2_link">
+    <inertial>
+      <origin        xyz="-0.00114816805964348 0.0161257896380144 0.00299466183693017"        rpy="0 0 0" />
+      <mass        value="0.00189243766259435" />
+      <inertia        ixx="0"        ixy="0"        ixz="0"        iyy="0"        iyz="0"        izz="0" />
+    </inertial>
+    <visual>
+      <origin        xyz="0 0 0"        rpy="0 0 0" />
+      <geometry>
+        <mesh          filename="package://servo_description/meshes/p2_link.STL"/>
+      </geometry>
+      <material        name="">
+        <color          rgba="0.56078431372549 0.56078431372549 0.56078431372549 1" />
+      </material>
+    </visual>
+<!--     <collision>
+      <origin        xyz="0 0 0"        rpy="0 0 0" />
+      <geometry>
+        <mesh          filename="package://servo_description/meshes/p2_link.STL" />
+      </geometry>
+    </collision> -->
+  </link>
+  <joint    name="p2_joint"    type="revolute">
+    <origin      xyz="-0.00898610195003464 0.072 -0.0029920681381921"      rpy="0 0 0" />
+    <parent      link="base_link_gripper" />
+    <child      link="p2_link" />
+    <axis      xyz="-0.004677823685813 0 0.999989058922929" />
+    <limit              lower="-9"              upper="9"              effort="30"              velocity="1" />      
+    <mimic joint="r1_joint" multiplier="-1" />
+  </joint>
+
+
+        <xacro:servo_arm_transmission prefix="${prefix}" />
+        <xacro:servo_arm_gazebo prefix="${prefix}" />
+
+
+    </xacro:macro>
+</robot>
