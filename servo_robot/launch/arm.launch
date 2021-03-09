@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="limited" default="false"/>
+
+  <include file="$(find servo_robot)/launch/servo.launch">
+  </include>
+
+  <!-- ps3 gamepad -->
+  <!--include file="$(find ps3joy)/launch/ps3.launch"-->
+  <include file="$(find servo_robot)/launch/ps3.launch">
+  </include>
+
+  <!--node name="rviz" pkg="rviz" type="rviz" args="-d $(find urdf_tutorial)/urdf.rviz" /-->
+
+  <!-- motor skills published joint states -->
+  <!-- node name="motors" pkg="arm_robot" type="motors.py" /-->
+</launch>

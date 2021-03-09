@@ -1,0 +1,22 @@
+<launch>
+  <node pkg="diagnostic_aggregator" type="aggregator_node" name="diagnostic_aggregator" >
+    <rosparam command="load" file="$(find ps3joy)/diagnostics.yaml" />
+  </node>
+
+  <!--node pkg="joy" type="joy_node" name="joy_node" output="screen">
+    <param name="dev" type="string" value="/dev/input/js0" />
+    <param name="deadzone" value="0.12" />
+    <param name="autorepeat_rate" value="5.0" type="double" />
+    <param name="coalesce_interval" value="0.1" type="double" />
+  </node-->
+
+  <!--node pkg="arm_robot" type="ps3joy_node.py" args="- -no-disable-bluetoothd" name="ps3joy_node" output="screen"-->
+  <node pkg="servo_robot" type="ps3joy_node.py" name="ps3joy_node" output="screen">
+    <param name="deadzone" value="10" />
+    <param name="autorepeat_rate" value="5.0" type="double" />
+  </node>
+
+  <!--node pkg="servo_robot" type="ps3ctl.py" name="ps3ctl" output="screen">
+  </node-->
+
+</launch>
