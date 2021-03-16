@@ -1,0 +1,27 @@
+servo:
+  controller:
+    state:
+      type: joint_state_controller/JointStateController
+      publish_rate: 200
+    position:
+        type: position_controllers/JointTrajectoryController
+        joints:
+            - a1_joint
+            - a2_joint
+            - a3_joint
+            - a4_joint
+            - a5_joint
+            - a6_joint
+        constraints:
+            a1_joint:
+                goal: 0.00034
+            a2_joint:
+                goal: 0.00034
+            a3_joint:
+                goal: 0.00034
+            a4_joint:
+                goal: 0.00046
+            a5_joint:
+                goal: 0.00046
+            a6_joint:
+                goal: 0.00061

@@ -1,0 +1,20 @@
+<launch>
+    <rosparam file="$(find servo_robothw)/config/controllers.yaml" command="load"/>
+    <rosparam file="$(find servo_robothw)/config/hardware.yaml" command="load"/>
+
+  <arg name="iface" default="ttyACM0" />
+  <param  name="iface" value="$(arg iface)" />
+
+  <arg name="run_control" default="true"/>
+
+  <param
+    name="robot_description"
+    command="$(find xacro)/xacro --inorder '$(find servo_description)/urdf/servo_robot.urdf.xacro'" />
+
+    <node name="robot_control_node" pkg="servo_robothw" type="servo_control_node" output="screen" if="$(arg run_control)" />
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" ns="/"
+        args="
+             /servo/controller/state
+             /servo/controller/position
+    "/>
+</launch>

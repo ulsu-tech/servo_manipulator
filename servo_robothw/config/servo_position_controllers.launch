@@ -1,0 +1,11 @@
+<launch>
+    <rosparam file="$(find servo_state_publisher_from_gui)/config/hardware.yaml" command="load"/>
+    <rosparam file="$(find servo_state_publisher_from_gui)/config/controllers.yaml" command="load"/>
+    <rosparam file="$(find servo_state_publisher_from_gui)/config/joint_limits.yaml" command="load"/>
+    <node name="servo_hardware_interface" pkg="servo_state_publisher_from_gui" type="servo_hardware_interface_node" output="screen"/>
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" ns="/"
+        args="
+            /servo/controller/state
+            /servo/controller/position/servo_position
+        "/>
+</launch>
