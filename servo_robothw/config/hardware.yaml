@@ -1,7 +1,7 @@
 servo:
     hardware_interface:
         loop_hz: 50 # Hz
-        type: servo_hardware_interface/ServoHW
+        type: "servo_hardware_interface/ServoHW"
         joints:
             - a1_joint
             - a2_joint

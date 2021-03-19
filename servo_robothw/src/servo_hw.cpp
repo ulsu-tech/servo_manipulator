@@ -9,7 +9,11 @@
 #include <unistd.h>
 
 #include <pthread.h>
-
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sstream>
+#include <string>
 
 namespace servo_hardware_interface {
 
@@ -17,6 +21,8 @@ ServoHW::ServoHW() :
       enableReadWrite(false)
     , isRunning(true)
     , inited(false)
+    , hasCMDOut(false)
+    , cmdLock(PTHREAD_MUTEX_INITIALIZER)
 {
     Ax_motor_link_reduction[0] = A1_motor_link_reduction;
     Ax_motor_link_reduction[1] = A2_motor_link_reduction;
@@ -49,6 +55,45 @@ void ServoHW::updateThread()
 {
   while(keepUpdates) {
 //TODO implement this method
+    const char getJointsCMD[] = "x\n";
+    ::write(fd_COM, getJointsCMD, 2);
+    char buff_input[300];
+    int rq = ::read(fd_COM, buff_input, 300);
+    // TODO strtok_r will save russian's democracy father
+    char *svptr;
+    char *line = strtok_r(buff_input, " \t", &svptr);
+    if(line == nullptr || strncmp(line, "Angle", 5) != 0)
+    {
+        usleep(1000);
+        continue;
+    }
+    int i=0;
+    while(line = strtok_r(nullptr, " \t", &svptr))
+    {
+        joint_pos_last_com[i] = atoi(line); // in 0,01 of deg
+        i++;
+    }
+
+    pthread_mutex_lock(&cmdLock);
+    if(hasCMDOut)
+    {
+        const char bufferRq[]="F\n";
+        char rqBuffer[300];
+        ::write(fd_COM, bufferRq, 2);
+        int rq = ::read(fd_COM, rqBuffer, 300);
+        if(rq < 5 || strncmp(rqBuffer, "READY", 5) != 0)
+        {
+            ROS_INFO_STREAM("confirmation of buffer readiness returned "<<rq
+                <<" bytes, with answer "<<rqBuffer);
+        }
+        else {
+            ::write(fd_COM, tgtCMD, strlen(tgtCMD));
+ROS_INFO_STREAM("Sending command\n"<<tgtCMD);
+            hasCMDOut = false;
+        }
+    }
+    pthread_mutex_unlock(&cmdLock);
+    usleep(5000);
 #if 0
     std::unique_lock<std::mutex> dataLock { ecn.getReadyMutex()};
     //ecn.getReadyDataCond().wait(dataLock);
@@ -75,7 +120,13 @@ bool ServoHW::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw_nh)
 
     joint_name = std::vector<std::string> { "a1_joint", "a2_joint", "a3_joint",
         "a4_joint", "a5_joint", "a6_joint" };
-    
+    /*joint_name.push_back("a1_joint");
+    joint_name.push_back("a2_joint");
+    joint_name.push_back("a3_joint");
+    joint_name.push_back("a4_joint");
+    joint_name.push_back("a5_joint");
+    joint_name.push_back("a6_joint");
+    */
     num_joints = joint_name.size();
     //resize vectors
     joint_position_state.resize(num_joints);
@@ -83,16 +134,21 @@ bool ServoHW::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw_nh)
     joint_effort_state.resize(num_joints);
     joint_position_command.resize(num_joints);
 
+    joint_pos_last_com.resize(num_joints);
+
+    jsh.resize(num_joints);
+    jph.resize(num_joints);
+
     //Register handles
     for(int i=0; i<num_joints; i++){
         //State
-        hardware_interface::JointStateHandle jointStateHandle(joint_name[i], &joint_position_state[i],
+        jsh[i] = hardware_interface::JointStateHandle(joint_name[i], &joint_position_state[i],
             &joint_velocity_state[i], &joint_effort_state[i]);
-        joint_state_interface.registerHandle(jointStateHandle);
+        joint_state_interface.registerHandle(jsh[i]);
 
         //Position
-        hardware_interface::JointHandle jointPosHandle(jointStateHandle, &joint_position_command[i]);
-        joint_pos_interface.registerHandle(jointPosHandle);
+        jph[i] =  hardware_interface::JointHandle(jsh[i], &joint_position_command[i]);
+        joint_pos_interface.registerHandle(jph[i]);
     }
 
     //Register interfaces
@@ -101,6 +157,14 @@ bool ServoHW::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw_nh)
 
     robot_hw_nh.param("iface", iface_name, std::string("ttyACM0"));
 //TODO rework from here and so on
+    std::string fullPath = std::string("/dev/") + iface_name;
+    fd_COM = open(fullPath.c_str(), O_NOCTTY | O_RDWR);
+    if (fd_COM < 0)
+    {
+        ROS_ERROR_STREAM("Failed to open device "<<fullPath<<"  thus, exiting");
+        return false;
+    }
+    
 #if 0
     bool ecnStarted = ecn.startNetwork(iface_name.c_str());
     if (! ecnStarted) {
@@ -198,6 +262,7 @@ bool ServoHW::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw_nh)
 bool ServoHW::prepareSwitch(const std::list<hardware_interface::ControllerInfo>& start_list,
                              const std::list<hardware_interface::ControllerInfo>& stop_list)
 {
+ROS_INFO_STREAM("Called ServoHW::prepareSwitch ");
     return hardware_interface::RobotHW::prepareSwitch(start_list, stop_list);
 }
 
@@ -205,6 +270,7 @@ void ServoHW::doSwitch(const std::list<hardware_interface::ControllerInfo>& star
                         const std::list<hardware_interface::ControllerInfo>& stop_list)
 {
     //TODO
+    ROS_INFO_STREAM("Called ServoHW::doSwitch");
     return;
 }
 
@@ -215,7 +281,15 @@ void ServoHW::read(const ros::Time& time, const ros::Duration& period)
         ROS_DEBUG(" ServoHW::read not enableReadWrite");
         return;
     }
-    const double popugai_to_rads = 1. /1800. * M_PI;
+    const double popugai_to_rads = 1. /18000. * M_PI;
+
+    //TODO lock me!!!
+    for(auto i = 0; i < joint_position_state.size(); ++i)
+    {
+        joint_position_state[i] = popugai_to_rads * joint_pos_last_com[i];
+        joint_velocity_state[i] = popugai_to_rads  * 0;
+        joint_effort_state[i] =  0;
+    }
 
     //TODO implement this method for this particular robot
 #if 0
@@ -259,10 +333,27 @@ void ServoHW::write(const ros::Time& time, const ros::Duration& period)
         return;
     }
     const int MAX_ALLOWED_VELOCITY = 180000; //4000 rpm
-    const double popugai_to_rads = 1. /1800. * M_PI;
+    const double popugai_to_rads = 1. /18000. * M_PI;
     // ATT sequence matters!!! each position of next controller is dependent on
     ROS_DEBUG_STREAM("called WRITE with time="<<time<<"    and period="<<period);
     // calculated previous position
+    // we'll check if command queue is empty, and only in that case - prepare and
+    // send next command
+    char rqBuffer[300];
+    sprintf(rqBuffer, "A1 ");
+    for(int i=0; i < num_joints; ++i)
+    {
+        double nextValue = joint_position_command[i]/popugai_to_rads;
+        char tmp[20];
+        sprintf(tmp, "%d ", static_cast<int>(nextValue));
+        strcat(rqBuffer, tmp);
+    }
+    strcat(rqBuffer, "S 10\n");
+    pthread_mutex_lock(&cmdLock);
+        strcpy(tgtCMD, rqBuffer);
+        hasCMDOut = true;
+    pthread_mutex_unlock(&cmdLock);
+//ROS_INFO_STREAM("Prepared command to servos:"<<tgtCMD);
 //TODO implement this method
 #if 0
     for(auto i=0; i < festo_controllers_found; ++i)

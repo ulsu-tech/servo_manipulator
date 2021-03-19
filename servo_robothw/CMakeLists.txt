@@ -140,36 +140,11 @@ set(LOCAL_INC ${CMAKE_CURRENT_SOURCE_DIR}/include/servo_robothw )
 ## Your package locations should be listed before other locations
 include_directories(include ${catkin_INCLUDE_DIRS} ${LOCAL_INC} ${CMAKE_CURRENT_BINARY_DIR})
 
-add_definitions( -std=c++11 -fPIC)
-
-
 #get_cmake_property(_variableNames VARIABLES)
 #list (SORT _variableNames)
 #foreach (_variableName ${_variableNames})
 #    message(STATUS "${_variableName}=${${_variableName}}")
 #endforeach()
-
-
-set( QT_SOURCES
-    src/ecn.cpp
-    src/ekxx.cpp
-    src/elxx.cpp
-    src/beckhoff.cpp
-    src/el41xx.cpp
-    src/festo_over_ec.cpp
-
-    src/joint_setting.cpp
-    src/moment_instruction.cpp
-    src/qt_based.cpp
-    src/window_first.cpp
-)
-
-set(CNT_SOURCES
-    src/armin_controller_interface.cpp
-    src/ecn.cpp
-    src/festo_over_ec.cpp
-    src/armin_hw.cpp
-)
 
 add_executable(servo_control_node
     src/servo_control_node.cpp

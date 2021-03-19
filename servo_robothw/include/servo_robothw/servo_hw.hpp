@@ -47,6 +47,11 @@ class ServoHW : public hardware_interface::RobotHW
     std::vector<double> joint_velocity_state;
     std::vector<double> joint_effort_state;
 
+    std::vector<double> joint_pos_last_com;
+
+    std::vector<hardware_interface::JointStateHandle> jsh;
+    std::vector<hardware_interface::JointHandle> jph;
+
     //std::vector<int> JOINT_SIGN;
 
     //given setpoints
@@ -91,6 +96,11 @@ class ServoHW : public hardware_interface::RobotHW
     static const uint16_t PRE_DEFINED_ERROR_FIELD_SLOTNUM;
     static const int errorFieldsCount;
     bool inited;
+
+    int fd_COM;
+    char tgtCMD[300];
+    bool hasCMDOut;
+    pthread_mutex_t cmdLock;
 
   private:
         double Ax_motor_link_reduction[TOTAL_ROTATE_JOINTS_COUNT];
