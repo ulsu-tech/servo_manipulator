@@ -286,7 +286,7 @@ void ServoHW::read(const ros::Time& time, const ros::Duration& period)
     //TODO lock me!!!
     for(auto i = 0; i < joint_position_state.size(); ++i)
     {
-        joint_position_state[i] = popugai_to_rads * joint_pos_last_com[i];
+        joint_position_state[i] = jointSigns[i] * popugai_to_rads * joint_pos_last_com[i];
         joint_velocity_state[i] = popugai_to_rads  * 0;
         joint_effort_state[i] =  0;
     }
@@ -343,12 +343,12 @@ void ServoHW::write(const ros::Time& time, const ros::Duration& period)
     sprintf(rqBuffer, "A1 ");
     for(int i=0; i < num_joints; ++i)
     {
-        double nextValue = joint_position_command[i]/popugai_to_rads;
+        double nextValue = jointSigns[i] * joint_position_command[i]/popugai_to_rads;
         char tmp[20];
         sprintf(tmp, "%d ", static_cast<int>(nextValue));
         strcat(rqBuffer, tmp);
     }
-    strcat(rqBuffer, "S 10\n");
+    strcat(rqBuffer, "S 30\n");
     pthread_mutex_lock(&cmdLock);
         strcpy(tgtCMD, rqBuffer);
         hasCMDOut = true;

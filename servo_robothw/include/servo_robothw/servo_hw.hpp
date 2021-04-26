@@ -139,5 +139,7 @@ class ServoHW : public hardware_interface::RobotHW
         { Wave_A5_transmission, Wave_A5_transmission, Wave_A5_transmission, Wave_A5_transmission, 1e6}, // on joint 5
         { Wave_A6_transmission, Wave_A6_transmission, Wave_A6_transmission, Wave_A6_transmission, -Wave_A6_transmission} // on joint 6
     };
+        const int jointSigns[TOTAL_ROTATE_JOINTS_COUNT] =
+    { 1, 1, -1, 1, 1, 1};
 };
 };
