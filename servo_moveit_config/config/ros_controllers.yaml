@@ -19,11 +19,44 @@ hardware_interface:
     - panda_finger_joint1
     - v1_joint
     - v2_joint
-  sim_control_mode: 1  # 0: position, 1: velocity
+  sim_control_mode: 0  # 0: position, 1: velocity
 # Publish all joint states
 # Creates the /joint_states topic necessary in ROS
 joint_state_controller:
   type: joint_state_controller/JointStateController
   publish_rate: 50
+
+servo:
+  controller:
+    position:
+      type: position_controllers/JointTrajectoryController
+      joints:
+        - a1_joint
+        - a2_joint
+        - a3_joint
+        - a4_joint
+        - a5_joint
+        - a6_joint
+      gains:
+        a1_joint: {  p: 12000, d: 50, i: 0.0, i_clamp: 10000 }
+        a2_joint: {  p: 30000, d: 90, i: 0.0, i_clamp: 10000 }
+        a3_joint: {  p: 18000, d: 70, i: 0.0, i_clamp: 10000 }
+        a4_joint: {  p: 12000, d: 30, i: 0.0, i_clamp: 10000 }
+        a5_joint: {  p: 12000, d: 80, i: 0.0, i_clamp: 10000 }
+        a6_joint: {  p: 12000, d: 50, i: 0.0, i_clamp: 10000 }
+      constraints:
+        goal_time: 2.0
+      state_publish_rate: 25
+
 controller_list:
-  []
+  - name: servo/controller/position
+    action_ns: follow_joint_trajectory
+    type: FollowJointTrajectory
+    default: true
+    joints:
+        - a1_joint
+        - a2_joint
+        - a3_joint
+        - a4_joint
+        - a5_joint
+        - a6_joint
